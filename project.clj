@@ -9,10 +9,16 @@
                  [ring/ring-jetty-adapter "1.1.8"]
                  [ring/ring-core "1.1.8"]
                  [ring-middleware-format "0.3.0"]]
-  :plugins [[lein-cljsbuild "0.3.2"]]
+
   :cljsbuild {:builds [{:source-paths ["src-cljs"]
                         :compiler {:output-to "resources/public/main.js"  ; default: target/cljsbuild-main.js
                                    :optimizations :whitespace
                                    :pretty-print true}}]}
   :main com.gtrak.rokku.server
+         
+  :plugins [[lein-cljsbuild "0.3.2"]
+            [lein-ring "0.8.5"]]
+
+  :ring {:handler com.gtrak.rokku.server/handler}
+  
   :warn-on-reflection true)
