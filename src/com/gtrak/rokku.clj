@@ -47,20 +47,22 @@ MX: 2
     :down Down
     :up Up
     :back Back
-    :instant-replay InstantReplay
+    :instant-replay Backspace
     :info Info
-    :backspace Backspace
+    :backspace InstantReplay
     :search Search
     :enter Enter
     :lit Lit_})
 
 (defn request*
   [address button]
-  (httpc/post (str address "keypress/" (get roku-keys button))))
+  (when-let [k (get roku-keys button)]
+    (println k)
+    (httpc/post (str address "keypress/" k))))
 
 (defn encode
   [s]
-  (java.net.URLEncoder/encode s))
+  (java.net.URLEncoder/encode (str s) "UTF-8"))
 
 (defn letters*
   [address s]
