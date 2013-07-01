@@ -28,6 +28,13 @@
   (log c)
   (.fromCharCode js/String c))
 
+;;; load the properties
+(def properties (js->clj js/properties {:keywordize-keys true}))
+
+(defn rel
+  [s]
+  (str (:context properties) s))
+
 (defn xhr [[method uri] content callback]
   (let [params (clj->js {:type (string/upper-case (name method))
                          :dataType "json"
@@ -38,7 +45,7 @@
 (defn handle-keys
   [e]
   (let [k (.-keyCode e)]
-    (xhr [:post "/key"]
+    (xhr [:post (rel "/key")]
          {:key (or (kmap k)
                    (from-char k))}
          identity)))
