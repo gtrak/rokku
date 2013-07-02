@@ -40,7 +40,7 @@
                          :dataType "json"
                          :data (clj->js content)
                          :success callback})]
-    (.ajax js/jQuery uri params)))
+    (.ajax js/jQuery uri params))) 
 
 (defn handle-keys
   [e]
