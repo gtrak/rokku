@@ -30,20 +30,23 @@
   [o]
   (with-out-str (pp/pprint o)))
 
+(defn rel
+  [context url]
+  (let [url (str url)]
+    (if (or (-> url java.net.URI. .isAbsolute)
+            (.startsWith url "//")
+            ;; catches path-relative urls
+            (not (.startsWith url "/")))
+      url
+      (str context url))))
+
 (defn add-context-fn
   [attr context]
   (fn [node]
     (update-in
      node
      [:attrs attr]
-     (fn [val]
-       (let [val (str val)]
-         (if (or (-> val java.net.URI. .isAbsolute)
-                 (.startsWith val "//")
-                 ;; catches path-relative urls
-                 (not (.startsWith val "/")))
-           val
-           (str context val)))))))
+     (partial rel context))))
 
 (defn relativize
   [content context]
@@ -61,24 +64,35 @@
         (if-let [r (io/resource (str "public/" path))]
           (rr/response (-> (slurp r)
                            (relativize context)))))))
+(defmacro wrap-request-binding
+ "Wraps the ring handler definition to provide request-scoped bindings
+  via symbol-capture on %."
+  [bindings handler-def]
+  `(fn [request#]
+     (let [~'% request#
+           ~@bindings]
+       (~handler-def request#))))
 
 (defn make-handler
   []
-  (routes
-   ;; static
-   (POST "/key" [key]
-         (accept-key key)
-         (rr/response nil))
-   (GET "/favicon.ico" [] (rr/resource-response "public/favicon.ico"))
-   (html "/index.html")
-   (content-type/wrap-content-type
-    (GET "/properties.js"
-         {context :context}
-         (str "var properties="
-              (cheshire/generate-string {:context context})
-              ";")))
-   (route/resources "/")
-   (rr/not-found nil)))
+  (wrap-request-binding
+   [{:keys [context]} %]
+   (routes
+    ;; static
+    (POST "/key" [key]
+          (accept-key key)
+          (rr/response nil))
+    (GET "/favicon.ico" [] (rr/resource-response "public/favicon.ico"))
+    (html "/index.html")
+    (GET "/" [] (rr/redirect (rel context "/index.html")))
+    (content-type/wrap-content-type
+     (GET "/properties.js"
+          {context :context}
+          (str "var properties="
+               (cheshire/generate-string {:context context})
+               ";")))
+    (route/resources "/")
+    (rr/not-found nil))))
 
 (def handler
   (-> (make-handler)

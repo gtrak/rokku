@@ -14,8 +14,9 @@
 
   :cljsbuild {:builds [{:source-paths ["src-cljs"]
                         :compiler {:output-to "resources/public/main.js"  ; default: target/cljsbuild-main.js
-                                   :optimizations :whitespace
-                                   :pretty-print true}}]}
+                                   :optimizations :advanced
+                                   ;:pretty-print true
+                                   }}]}
   :main com.gtrak.rokku.server
          
   :plugins [[lein-cljsbuild "0.3.2"]

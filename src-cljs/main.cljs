@@ -29,7 +29,7 @@
   (.fromCharCode js/String c))
 
 ;;; load the properties
-(def properties (js->clj js/properties {:keywordize-keys true}))
+(def properties (js->clj js/properties :keywordize-keys true))
 
 (defn rel
   [s]
@@ -51,5 +51,4 @@
          identity)))
 
 (.addEventListener js/window "keydown" handle-keys false)
-
 
