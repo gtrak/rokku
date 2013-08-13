@@ -5,7 +5,7 @@ angular.module('myApp', [])
     return {
       scope: { icon: '@', 
                key: '@'},
-      template: '<button class="btn span4" ng-controller="ButtonCtrl" ng-click="click(key)" ng-transclude><i class="{{icon}}"></i></button>',
+      template: '<button id={{key}} class="btn span4" ng-controller="ButtonCtrl" ng-click="click(key)" ng-transclude><i class="{{icon}}"></i></button>',
       restrict: 'E',
       transclude: true
     }

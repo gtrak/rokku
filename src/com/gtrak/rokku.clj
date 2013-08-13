@@ -64,10 +64,9 @@ MX: 2
   [s]
   (java.net.URLEncoder/encode (str s) "UTF-8"))
 
-(defn letters*
-  [address s]
-  (doseq [l s]
-    (httpc/post (str address "keypress/" (get roku-keys :lit) (encode l)))))
+(defn letter*
+  [address l]
+  (httpc/post (str address "keypress/" (get roku-keys :lit) (encode l))))
 
 (def the-address (delay (find-roku)))
 
@@ -75,6 +74,6 @@ MX: 2
   [button]
   (request* @the-address button))
 
-(defn letters
-  [letters]
-  (letters* @the-address letters))
+(defn letter
+  [letter]
+  (letter* @the-address letters))

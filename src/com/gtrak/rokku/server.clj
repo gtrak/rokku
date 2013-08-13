@@ -16,19 +16,8 @@
 (defn accept-key
   [key]
   (if (= 1 (count key))
-    (rokku/letters [key])
+    (rokku/letter key)
     (rokku/request (keyword key))))
-
-(defn wrap-debug
-  [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (println response (:body response))
-      response)))
-
-(defn pprint-str
-  [o]
-  (with-out-str (pp/pprint o)))
 
 (defn rel
   [context url]
@@ -64,6 +53,7 @@
         (if-let [r (io/resource (str "public/" path))]
           (rr/response (-> (slurp r)
                            (relativize context)))))))
+
 (defmacro wrap-request-binding
  "Wraps the ring handler definition to provide request-scoped bindings
   via symbol-capture on %."
@@ -86,8 +76,7 @@
     (html "/index.html")
     (GET "/" [] (rr/redirect (rel context "/index.html")))
     (content-type/wrap-content-type
-     (GET "/properties.js"
-          {context :context}
+     (GET "/properties.js" []
           (str "var properties="
                (cheshire/generate-string {:context context})
                ";")))

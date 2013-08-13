@@ -14,8 +14,8 @@
 
   :cljsbuild {:builds [{:source-paths ["src-cljs"]
                         :compiler {:output-to "resources/public/main.js"  ; default: target/cljsbuild-main.js
-                                   :optimizations :advanced
-                                   :externs ["externs.js"]
+                                   :optimizations :simple
+                                   :externs ["externs.js" "angular-externs.js"]
                                    }}]}
   :main com.gtrak.rokku.server
          
