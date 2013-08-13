@@ -75,16 +75,21 @@
        (-> (($http) cfg)
            (.success (partial shim-fn success)))))) 
 
-(defn handle-keys
+(defn post-key
+  [key]
+  (xhr :post (rel "/key") {:key key}))
+
+(defn handle-key
   [e]
   (let [k (.-keyCode e)]
-    (xhr :post (rel "/key")
-         {:key (or (kmap k) 
-                   (from-char k))})))
-
-(.addEventListener js/window "keydown" handle-keys false)
-
+    (post-key (or (kmap k) 
+                  (from-char k)))))
 
 (defn ^:export button-press
   [key]
-  (log key))
+  (post-key (keyword key)))
+
+(.addEventListener js/window "keydown" handle-key false)
+
+
+

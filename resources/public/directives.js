@@ -1,3 +1,5 @@
+var main = com.gtrak.rokku.main;
+
 angular.module('myApp', [])
   .directive('btn', function() {
     return {
@@ -17,7 +19,7 @@ angular.module('myApp', [])
   })
   .controller('ButtonCtrl', ['$scope', function($scope) {
     $scope.click = function(key){
-      console.log(key);
+      main.button_press(key);
     };
   }])
 ;
