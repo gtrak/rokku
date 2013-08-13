@@ -21,7 +21,7 @@
 
 (defn log
   [c]
-  (.log js/console (str c)))
+  (.log js/console c))
 
 (defn from-char
   [c]
@@ -35,20 +35,56 @@
   [s]
   (str (:context properties) s))
 
-(defn xhr [[method uri] content callback]
-  (let [params (clj->js {:type (string/upper-case (name method))
-                         :dataType "json"
-                         :data (clj->js content)
-                         :success callback})]
-    (.ajax js/jQuery uri params))) 
+(defn ng-root
+  []
+  (.getElementById js/document "root"))
+
+(defn injector
+  []
+  (->> (ng-root)
+       (.element js/angular)
+       (.injector)))
+
+(defn service
+  [svc]
+  (.get (injector) svc))
+
+(defn cached-singleton
+  [f]
+  (let [val (atom nil)]
+    (fn []
+      (or @val (reset! val (f))))))
+
+(def $http (cached-singleton #(service "$http")))
+
+;; main.http()({method:'GET',url:'/'})
+;;   .success(function(data, status, headers, config){
+;;     console.log(data)
+;;   })
+(defn xhr
+  ([method url data] (xhr method url data identity))
+  ([method url data success]
+     (let [cfg (clj->js {:method (string/upper-case (name method))
+                         :url url
+                         :data data})
+           shim-fn (fn [f data status headers config]
+                     (f (js->clj {:data data
+                                  :status status
+                                  :headers headers
+                                  :config config})))]
+       (-> (($http) cfg)
+           (.success (partial shim-fn success)))))) 
 
 (defn handle-keys
   [e]
   (let [k (.-keyCode e)]
-    (xhr [:post (rel "/key")]
-         {:key (or (kmap k)
-                   (from-char k))}
-         identity)))
+    (xhr :post (rel "/key")
+         {:key (or (kmap k) 
+                   (from-char k))})))
 
 (.addEventListener js/window "keydown" handle-keys false)
 
+
+(defn ^:export button-press
+  [key]
+  (log key))
