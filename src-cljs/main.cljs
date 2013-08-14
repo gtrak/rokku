@@ -100,7 +100,6 @@
 (defn handle-key
   [e]
   (let [k (.-keyCode e)
-        _ (log k)
         key (or (kmap k) 
                 (from-char k))
         state (state)

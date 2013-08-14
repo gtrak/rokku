@@ -75,5 +75,7 @@ MX: 2
   (request* @the-address button))
 
 (defn letter
-  [letter]
-  (letter* @the-address letters))
+  [l]
+  (println (letter* @the-address l)))
+
+(alter-var-root #'*out* (constantly *out*))
