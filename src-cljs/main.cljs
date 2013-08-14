@@ -21,11 +21,11 @@
 
 (defn log
   [c]
-  (.log js/console c))
+  (.log js/console c)
+  c)
 
 (defn from-char
   [c]
-  (log c)
   (.fromCharCode js/String c))
 
 ;;; load the properties
@@ -45,6 +45,12 @@
        (.element js/angular)
        (.injector)))
 
+(defn scope
+  [elt]
+  (->> elt
+       (.element js/angular)
+       (.scope)))
+
 (defn service
   [svc]
   (.get (injector) svc))
@@ -62,16 +68,16 @@
 ;;     console.log(data)
 ;;   })
 (defn xhr
-  ([method url data] (xhr method url data identity))
+  ([method url data] (xhr method url data nil))
   ([method url data success]
      (let [cfg (clj->js {:method (string/upper-case (name method))
                          :url url
                          :data data})
            shim-fn (fn [f data status headers config]
-                     (f (js->clj {:data data
-                                  :status status
-                                  :headers headers
-                                  :config config})))]
+                     (and f (f (js->clj {:data data
+                                         :status status
+                                         :headers headers
+                                         :config config}))))]
        (-> (($http) cfg)
            (.success (partial shim-fn success)))))) 
 
@@ -79,11 +85,32 @@
   [key]
   (xhr :post (rel "/key") {:key key}))
 
+(def state (cached-singleton #(service "state")))
+
+(def root-scope (cached-singleton #(scope (ng-root))))
+
+(defn update
+  []
+  (.$apply (root-scope)))
+
+(defn do-t
+  [ms f]
+  (js/setTimeout f ms))
+
 (defn handle-key
   [e]
-  (let [k (.-keyCode e)]
-    (post-key (or (kmap k) 
-                  (from-char k)))))
+  (let [k (.-keyCode e)
+        _ (log k)
+        key (or (kmap k) 
+                (from-char k))
+        state (state)
+        set-f #(aset state "currentKey" %)]
+    (set-f (name key))
+    (update)
+    (do-t 100 (fn []
+                (set-f nil)
+                (update)))
+    (post-key key)))
 
 (defn ^:export button-press
   [key]
@@ -91,5 +118,20 @@
 
 (.addEventListener js/window "keydown" handle-key false)
 
+(def kbd-keys
+  ["Home" "Home"
+   "<" "Rewind"
+   ">" "Fast-Forward"
+   "Enter" "Select"
+   "Left-Arrow" "Left"
+   "Right-Arrow" "Right"
+   "Down-Arrow" "Down"
+   "Up-Arrow" "Up"
+   "- (minus)" "Back"
+   "Backspace" "Instant Replay"
+   "= (equals)" "Play/pause"])
 
+(defn ^:export legend
+  []
+  (clj->js (partition 2 kbd-keys)))
 
