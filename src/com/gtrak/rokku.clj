@@ -1,7 +1,8 @@
 (ns com.gtrak.rokku
   (:require [clojure.java.io :as io]
             [clojure.string :as s]
-            [clj-http.client :as httpc])
+            [clj-http.client :as httpc]
+            [clojure.core.async :as async :refer [go go-loop]])
   (:import [java.net DatagramSocket InetAddress DatagramPacket]))
 
 (def m-search
@@ -16,25 +17,37 @@ MX: 2
 (defn send-m-search
   []
   (let [a (InetAddress/getByName "239.255.255.250")
-        m-search (.getBytes m-search)
-        rcv-bytes (byte-array 256)]
+        m-search (.getBytes m-search)]
     (with-open [s (DatagramSocket.)]
       (let [send-packet (DatagramPacket. m-search (count m-search) a 1900)
-            rcv-packet (DatagramPacket. rcv-bytes (count rcv-bytes))]
+            rcv-bytes (byte-array 256)
+            rcv-packet (DatagramPacket. rcv-bytes (count rcv-bytes))
+            timeout (async/timeout 5000)]
         (.send s send-packet)
-        (.receive s rcv-packet)
-        (String. (.getData rcv-packet))))))
+        (async/<!!
+         (go-loop [responses []]
+           (let [rcv-bytes (byte-array 256)
+                 rcv-packet (DatagramPacket. rcv-bytes (count rcv-bytes))
+                 receive (async/thread (.receive s rcv-packet))
+                 [v p] (async/alts! [receive timeout])]
+             (if (= p receive)
+               (recur (conj responses (String. (.getData rcv-packet))))
+               responses))))))))
 
-(defn find-roku
-  []
-  (let [response (send-m-search)
-        prefix "Location: "]
-    (-> response
-        s/split-lines
-        (->> (filter #(.contains % prefix)))
-        first
-        (subs (count prefix))
-        java.net.URL.)))
+
+
+(defn parse-response
+  [response]
+  (->> response
+       s/split-lines
+       (map (partial re-matches #"(.*): (.*)"))
+       (keep (comp seq (partial drop 1)))
+       (map vec)
+       (into {})))
+
+(defn roku-address
+  [{:strs [Location LOCATION] :as parsed-response}]
+  (java.net.URL. (or Location LOCATION)))
 
 (def roku-keys
   '{:home Home
@@ -68,14 +81,8 @@ MX: 2
   [address l]
   (httpc/post (str address "keypress/" (get roku-keys :lit) (encode l))))
 
-(def the-address (delay (find-roku)))
+(def rokus (delay (map parse-response (send-m-search))))
 
-(defn request
-  [button]
-  (request* @the-address button))
-
-(defn letter
-  [l]
-  (println (letter* @the-address l)))
-
-(alter-var-root #'*out* (constantly *out*))
+(defn addresses
+  []
+  (map roku-address @rokus))

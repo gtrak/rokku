@@ -3,28 +3,26 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [clj-http "0.7.2"]
-                 [compojure "1.1.5"]
-                 [ring/ring-core "1.1.8"]
-                 [ring-middleware-format "0.3.0"]
-                 [me.raynes/laser "1.1.1"]
-                 [org.jsoup/jsoup "1.7.2"]]
-  :profiles {:dev {:dependencies [[clojure-complete "0.2.3"]]}}
+  :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
+                 [clj-http "3.3.0"]
+                 [compojure "1.5.1" :exclusions [ring/ring-core]]
+                 [ring/ring "1.6.0-beta6"]
+                 [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/core.async "0.2.391"]
+                 [rum "0.10.7"]
+                 [ring-middleware-format "0.7.0"]]
 
   :cljsbuild {:builds [{:source-paths ["src-cljs"]
-                        :compiler {:output-to "resources/public/main.js"  ; default: target/cljsbuild-main.js
-                                   :optimizations :advanced
-                                   :externs ["externs.js" "angular-externs.js"]
+                        :compiler {:output-to "resources/public/main.js"
+                                   :output-dir "resources/public/cljs"
+                                   :optimizations :simple
+                                   :externs ["externs.js"]
+                                   :source-map "resources/public/main.js.map"
                                    }}]}
   :main com.gtrak.rokku.server
-         
-  :plugins [[lein-cljsbuild "0.3.2"]
-            [lein-ring "0.8.5"]]
 
-  :ring {:handler com.gtrak.rokku.server/handler
-         :nrepl {:start? true
-                 ;:port
-                 }}
-  
-  :warn-on-reflection true)
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]]
+                   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}}
+
+  :plugins [[lein-cljsbuild "1.1.4"]]
+  )
